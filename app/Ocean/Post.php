@@ -34,6 +34,8 @@ final class Post
             'v' => $v,
             'days' => 0.0,
             'km' => 0.0,
+            'sampled_km' => 0.0,
+            'sampled_position' => Geo::point($lat, $lng),
             'sender_key' => $sailor,
             ...($inReplyTo ? [
                 'parent_id' => new ObjectId((string) $inReplyTo->id),

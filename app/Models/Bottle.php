@@ -95,9 +95,7 @@ class Bottle extends Model
             'reserved' => $this->reservedFrom($sailor),
             'launchedFrom' => ['lat' => $this->launched_from['coordinates'][1], 'lng' => $this->launched_from['coordinates'][0]],
             'launchedSea' => $this->launched_sea,
-            'straightKm' => (int) round(Geo::distanceKm(
-                $this->launched_from['coordinates'][1], $this->launched_from['coordinates'][0], $this->lat(), $this->lng(),
-            )),
+            'straightKm' => (int) round(Geo::between($this->launched_from, $this->position)),
         ];
     }
 }

@@ -56,7 +56,6 @@ class OceanPhysicsTest extends TestCase
         foreach (range(1, 6) as $seed) {
             $voyage = (new Drifter($ocean, $seed))->advance(-23.5, -42, 200);
             $this->assertTrue($ocean->isSea($voyage->lat, $voyage->lng));
-            $this->assertGreaterThan(0, $voyage->km);
         }
     }
 
@@ -66,7 +65,7 @@ class OceanPhysicsTest extends TestCase
         $a = (new Drifter($ocean, 7))->advance(10, -30, 60);
         $b = (new Drifter($ocean, 7))->advance(10, -30, 60);
 
-        $this->assertSame([$a->lat, $a->lng, $a->km], [$b->lat, $b->lng, $b->km]);
+        $this->assertSame([$a->lat, $a->lng], [$b->lat, $b->lng]);
         $this->assertCount(60, $a->samples);
     }
 

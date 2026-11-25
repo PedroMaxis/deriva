@@ -56,7 +56,6 @@ final class Drifter
                 continue; // a onda a devolve ao mar
             }
 
-            $voyage->km += hypot($u, $v) * $dt * self::SECONDS_PER_DAY / 1000;
             [$voyage->lat, $voyage->lng, $voyage->u, $voyage->v] = [$nextLat, $nextLng, $u, $v];
 
             if ($voyage->days >= $nextSample - 1.0e-9) {

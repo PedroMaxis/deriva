@@ -61,7 +61,6 @@ final class Tide
                 'u' => $voyage->u,
                 'v' => $voyage->v,
                 'days' => $bottle->days + $voyage->days,
-                'km' => $bottle->km + $voyage->km,
                 'ticked_at' => new UTCDateTime($now),
             ];
 
@@ -71,16 +70,27 @@ final class Tide
             if ($track === [] && $sinceSample >= 1) {
                 $track = [['day' => $voyage->days, 'lat' => $voyage->lat, 'lng' => $voyage->lng, 'speed' => hypot($voyage->u, $voyage->v)]];
             }
+            // O percurso é o comprimento da linha que o mapa desenha: de amostra em amostra, mais o trecho até aqui.
+            // Somar cada passo não serve: com turbulência, quanto menor o passo, mais longo o caminho.
+            $km = $bottle->sampled_km ?? $bottle->km;
+            $last = $bottle->sampled_position ?? $bottle->position;
             foreach ($track as $sample) {
                 $ts = $bottle->ticked_at->getTimestampMs() + (int) ($sample['day'] / $rate * 1000);
+                $here = Geo::point($sample['lat'], $sample['lng']);
+                $km += Geo::between($last, $here);
+                $last = $here;
                 $samples[] = [
                     'ts' => new UTCDateTime($ts),
                     'bottle_id' => $id,
-                    'position' => Geo::point($sample['lat'], $sample['lng']),
+                    'position' => $here,
                     'speed' => $sample['speed'],
                 ];
                 $set['sampled_at'] = new UTCDateTime($ts);
             }
+
+            $set['sampled_km'] = $km;
+            $set['sampled_position'] = $last;
+            $set['km'] = $km + Geo::between($last, $set['position']);
 
             $update = ['$set' => $set];
             if ($voyage->ashore) {

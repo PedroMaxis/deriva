@@ -12,6 +12,7 @@ use App\Ocean\Post;
 use App\Ocean\Tide;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use MongoDB\BSON\ObjectId;
 use Tests\OceanTestCase;
 
 class BottlePostTest extends OceanTestCase
@@ -164,6 +165,42 @@ class BottlePostTest extends OceanTestCase
 
         $this->assertEqualsWithDelta(3, Bottle::find($id)->days, 0.1);
         $this->assertThat($samples, $this->logicalAnd($this->greaterThanOrEqual(3), $this->lessThanOrEqual(5)));
+    }
+
+    public function test_the_distance_travelled_is_never_shorter_than_the_straight_line(): void
+    {
+        $start = now();
+        foreach (range(1, 8) as $seed) {
+            $bottle = app(Post::class)->launch($this->alice, 'De Dacar', null, 'verde', 14.7, -17.7);
+            (new Tide(new Drifter(app(Ocean::class), $seed), app(Atlas::class)))->move($start->copy()->addMinutes(60));
+            $chart = $bottle->refresh()->toChart($this->alice);
+
+            $this->assertGreaterThanOrEqual($chart['straightKm'], $chart['km'], "semente $seed");
+            $bottle->delete();
+        }
+    }
+
+    /** A turbulência alonga o caminho quanto menor o passo: o percurso não pode depender do ritmo da maré. */
+    public function test_the_distance_travelled_is_the_length_of_the_daily_track(): void
+    {
+        $this->travelTo($start = now()->startOfSecond());
+        $bottle = app(Post::class)->launch($this->alice, 'De Dacar', null, 'verde', 14.7, -17.7);
+        $tide = new Tide(new Drifter(app(Ocean::class), 3), app(Atlas::class));
+        foreach (range(1, 40) as $k) {
+            $tide->move($start->copy()->addSeconds($k * 5));
+        }
+        $bottle->refresh();
+
+        $points = DB::connection('mongodb')->getDatabase()->selectCollection('drift_log')
+            ->find(['bottle_id' => new ObjectId((string) $bottle->id)], ['sort' => ['ts' => 1]])->toArray();
+        $line = [...array_map(fn ($p) => (array) $p['position']['coordinates'], $points), [$bottle->lng(), $bottle->lat()]];
+        $length = 0.0;
+        for ($i = 1; $i < count($line); $i++) {
+            $length += Geo::distanceKm($line[$i - 1][1], $line[$i - 1][0], $line[$i][1], $line[$i][0]);
+        }
+
+        $this->assertGreaterThan(3, count($points));
+        $this->assertEqualsWithDelta($length, $bottle->km, 0.01);
     }
 
     public function test_landing_clears_the_ttl_and_names_the_shore(): void

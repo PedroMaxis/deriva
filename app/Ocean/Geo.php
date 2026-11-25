@@ -24,6 +24,12 @@ final class Geo
         return 2 * self::EARTH_RADIUS_KM * asin(min(1.0, sqrt($a)));
     }
 
+    /** Distância em km entre dois pontos GeoJSON. */
+    public static function between(array $a, array $b): float
+    {
+        return self::distanceKm($a['coordinates'][1], $a['coordinates'][0], $b['coordinates'][1], $b['coordinates'][0]);
+    }
+
     /** Rumo da corrente (para onde vai) em rosa dos ventos, com L = leste e O = oeste. */
     public static function compass(float $u, float $v): string
     {

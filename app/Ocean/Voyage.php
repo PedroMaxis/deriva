@@ -14,7 +14,6 @@ final class Voyage
         public float $lat,
         public float $lng,
         public float $days = 0.0,
-        public float $km = 0.0,
         public float $u = 0.0,
         public float $v = 0.0,
     ) {}
