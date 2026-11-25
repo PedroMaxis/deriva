@@ -1,0 +1,47 @@
+#!/usr/bin/env bash
+# Sobe o Deriva: MongoDB, maré e servidor web. Ctrl+C encerra a maré e o servidor.
+# Uso: ./deriva          sobe tudo em http://localhost:8010
+#      ./deriva rede     o mesmo, aberto à rede local e sem debug
+#      ./deriva test     roda os testes
+#      ./deriva artisan  qualquer comando do artisan
+#      ./deriva stop     encerra o MongoDB local
+set -euo pipefail
+cd "$(dirname "$(readlink -f "$0")")"
+
+PHP=php
+MONGOD=mongod
+if [ -x .toolchain/arch/usr/bin/php ]; then
+    PHP="$PWD/.toolchain/arch/usr/bin/php"
+    export LD_LIBRARY_PATH="$PWD/.toolchain/arch/usr/lib" PHPRC="$PWD/.toolchain"
+fi
+[ -x .toolchain/mongo/bin/mongod ] && MONGOD="$PWD/.toolchain/mongo/bin/mongod"
+
+mongo_up() { (exec 3<>/dev/tcp/127.0.0.1/27117) 2>/dev/null; }
+start_mongo() {
+    mongo_up && return
+    mkdir -p storage/mongo/data
+    "$MONGOD" --dbpath storage/mongo/data --port 27117 --bind_ip 127.0.0.1 --replSet deriva \
+        --wiredTigerCacheSizeGB 0.5 --fork --logpath "$PWD/storage/mongo/mongod.log" >/dev/null
+}
+
+case "${1:-up}" in
+    stop) "$MONGOD" --dbpath storage/mongo/data --shutdown ;;
+    test) start_mongo; "$PHP" artisan ocean:prepare >/dev/null; exec "$PHP" vendor/bin/phpunit ;;
+    artisan) start_mongo; shift; exec "$PHP" artisan "$@" ;;
+    up|rede)
+        host=127.0.0.1
+        if [ "${1:-up}" = rede ]; then
+            host=0.0.0.0
+            export APP_DEBUG=false
+        fi
+        start_mongo
+        "$PHP" artisan ocean:prepare
+        "$PHP" artisan ocean:tide --watch &
+        tide=$!
+        trap 'kill "$tide" 2>/dev/null' EXIT
+        echo "Deriva em http://localhost:8010"
+        [ "$host" = 127.0.0.1 ] || ip -4 -o addr show scope global | awk '{split($4, a, "/"); print "Na rede:  http://" a[1] ":8010"}'
+        PHP_CLI_SERVER_WORKERS=8 "$PHP" artisan serve --host="$host" --port=8010 --no-reload
+        ;;
+    *) sed -n '2,8p' "$0"; exit 1 ;;
+esac
