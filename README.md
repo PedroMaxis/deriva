@@ -1,57 +1,64 @@
+<div align="center">
+
+<img src="public/favicon.svg" width="88" alt="">
+
 # Deriva, o correio do mar
 
-Você escreve uma carta, escolhe um ponto do oceano e lança a garrafa. Ela deriva num globo vivo,
-levada por correntes calculadas, e um dia encalha. Só uma pessoa no mundo pode abri-la, e pode responder.
+Escreva uma carta, escolha um ponto do oceano e lance a garrafa.<br>
+O mar decide onde ela encalha. Só uma pessoa pode abri-la.
 
-Um minuto aqui é um dia no mar.
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/noite.webp">
+  <img src="docs/dia.webp" alt="Globo com garrafas à deriva no Atlântico e, ao lado, a lista das que já encalharam">
+</picture>
 
-## Rodar
+</div>
+
+Fiz o Deriva por diversão. É um mar que continua andando: **um minuto aqui é um dia lá**, e uma garrafa
+pode levar mais de um ano para achar uma praia.
+
+## Como é
+
+**Você escreve e escolhe onde lançar.** Antes de soltar a garrafa, o mapa mostra 24 rumos que ela pode tomar
+nos próximos seis meses.
+
+![Formulário da carta e, no globo, os rumos possíveis da garrafa pelo Atlântico Sul](docs/escrever.webp)
+
+**Ela vai embora.** Dá para acompanhar o caminho de cada uma. Esta saiu do meio do Pacífico Norte e, oito meses
+depois, deu nas Filipinas.
+
+![Trajeto de uma garrafa pelo Pacífico até as Filipinas](docs/trajetoria.webp)
+
+**Alguém acha, abre e lê.** Uma carta, um leitor. Quem abriu pode responder, e a resposta também vai pelo mar:
+por um ano de mar, só quem escreveu a primeira carta pode abri-la.
+
+![Carta aberta: "Aqui anoitece às três e meia da tarde. Escrevo de dentro do escuro com a lanterna na boca."](docs/carta.webp)
+
+## Detalhes de que eu gosto
+
+- Nenhuma corrente foi desenhada à mão. O programa calcula como o vento empurra a água, e a Corrente do Golfo
+  aparece sozinha.
+- O botão "Ouvir o mar" faz o que promete.
+- À noite, o globo escurece como a tela de navegação de um navio.
+- Não tem cadastro, e o texto de uma carta só chega a quem a escreveu ou a abriu.
+- O mar já começa com cartas. São todas inventadas, do Davi de 9 anos que quer saber se aí tem tubarão
+  à costureira que guarda um retalho de cada vestido de noiva que fez.
+
+## Para rodar
+
+Precisa de PHP 8.3+ com `ext-mongodb`, Composer, MongoDB 8 e Node.
 
 ```bash
-./deriva          # http://localhost:8010
-./deriva rede     # o mesmo, aberto à rede local e com debug desligado
-./deriva test     # testes
-./deriva artisan db:seed   # recomeça o mar com as cartas fictícias (apaga as garrafas atuais)
-./deriva stop     # encerra o MongoDB
+composer install
+cp .env.example .env
+php artisan key:generate
+npm install && npm run build
+./deriva
 ```
 
-Nesta máquina PHP 8.5 e MongoDB 8.0 ficam em `.toolchain/`, fora do sistema e do Git. Em outra, o
-script usa o `php` (8.3+, com `ext-mongodb`) e o `mongod` do PATH; antes rode `composer install`,
-`cp .env.example .env`, `php artisan key:generate`, `npm install` e `npm run build`.
+Depois é só abrir <http://localhost:8010>. Ainda não há moderação das cartas, então ele foi feito para rodar em
+casa ou entre amigos.
 
-## As correntes
+---
 
-Nenhuma foi desenhada. `ocean:build` rasteriza os continentes e resolve a equação de Stommel
-
-    r∇²ψ + β ∂ψ/∂x = rot τ
-
-numa grade de 1°, com os ventos médios (alísios e ventos de oeste) como única força. Corrente do Golfo,
-Kuroshio, do Brasil, Agulhas e Circumpolar Antártica aparecem sozinhas, e os testes cobram isso. A
-garrafa soma a corrente, o arrasto do vento e turbulência. É um modelo climatológico simplificado, não
-uma previsão oceanográfica.
-
-## O que o MongoDB faz
-
-| Recurso | Uso |
-| --- | --- |
-| Time series | `drift_log`: a trajetória de cada garrafa, com expiração |
-| `2dsphere`, `$geoNear`, `$geoIntersects` | garrafa mais próxima, em que mar estou, em que costa encalhou |
-| `findOneAndUpdate` | abertura atômica: uma carta, um leitor |
-| Índice TTL | garrafa nunca achada se desfaz em 5 anos de mar |
-| Índice único esparso | uma resposta por carta |
-| Change streams | tempo real por SSE; o resume token é o `Last-Event-ID`, e quem cai continua do ponto exato |
-| `$graphLookup` | a correspondência inteira que uma resposta carrega |
-| `$facet`, `$bucket`, `$bucketAuto` | diário de bordo e redução das trajetórias |
-
-## Privacidade
-
-Não há cadastro. Um cookie cifrado identifica o marujo e o banco guarda apenas um HMAC dele. O texto
-de uma carta só sai do servidor para quem a escreveu ou a abriu.
-
-## Limites conhecidos
-
-- Não há moderação de conteúdo além do limite de lançamentos por hora. Antes de abrir ao público, é preciso.
-- Cada aba ocupa um worker do PHP com o SSE (em ciclos de 25 s). Com muita gente, use Octane ou FrankenPHP.
-- `OCEAN_DAYS_PER_MINUTE` no `.env` muda a velocidade do mar.
-
-Geografia: Natural Earth (domínio público). As cartas iniciais são fictícias.
+Feito com Laravel, MongoDB, WebGL e JavaScript. Mapas do [Natural Earth](https://www.naturalearthdata.com/), em domínio público.
