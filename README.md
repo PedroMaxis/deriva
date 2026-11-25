@@ -14,8 +14,10 @@ O mar decide onde ela encalha. Só uma pessoa pode abri-la.
 
 </div>
 
-Fiz o Deriva por diversão. É um mar que continua andando: **um minuto aqui é um dia lá**, e uma garrafa
-pode levar mais de um ano para achar uma praia.
+> Projeto de estudo: fiz o Deriva só para treinar **Laravel** e o padrão **MVC**. Não é um produto.
+
+É um mar que continua andando: **um minuto aqui é um dia lá**, e uma garrafa pode levar mais de um ano para
+achar uma praia.
 
 ## Como é
 
@@ -24,7 +26,7 @@ nos próximos seis meses.
 
 ![Formulário da carta e, no globo, os rumos possíveis da garrafa pelo Atlântico Sul](docs/escrever.webp)
 
-**Ela vai embora.** Dá para acompanhar o caminho de cada uma. Esta saiu do meio do Pacífico Norte e, oito meses
+**Ela vai embora.** Dá para acompanhar o caminho de cada uma. Esta saiu do meio do Pacífico Norte e, sete meses
 depois, deu nas Filipinas.
 
 ![Trajeto de uma garrafa pelo Pacífico até as Filipinas](docs/trajetoria.webp)
@@ -61,4 +63,4 @@ casa ou entre amigos.
 
 ---
 
-Feito com Laravel, MongoDB, WebGL e JavaScript. Mapas do [Natural Earth](https://www.naturalearthdata.com/), em domínio público.
+Feito com Laravel (MVC), MongoDB, WebGL e JavaScript. Mapas do [Natural Earth](https://www.naturalearthdata.com/), em domínio público.
